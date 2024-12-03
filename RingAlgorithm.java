@@ -1,83 +1,53 @@
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Scanner;
 
 public class RingAlgorithm {
-    static class Process {
-        int id;
-        boolean isActive;
-
-        Process(int id) {
-            this.id = id;
-            this.isActive = true;
-        }
-    }
-
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        ArrayList<Process> processes = new ArrayList<>();
 
+        // Input the number of processes
         System.out.print("Enter the number of processes: ");
         int n = scanner.nextInt();
 
+        int[] processIds = new int[n];
+        boolean[] isActive = new boolean[n];
+
+        // Input process IDs
         System.out.println("Enter the IDs of the processes: ");
         for (int i = 0; i < n; i++) {
-            processes.add(new Process(scanner.nextInt()));
+            System.out.print("Process " + (i + 1) + " ID: ");
+            processIds[i] = scanner.nextInt();
+            isActive[i] = true; // All processes are active initially
         }
 
-        Collections.sort(processes, (a, b) -> a.id - b.id); // Sort by ID for the ring structure
+        // Input the initiator process
+        System.out.print("Enter the initiator process index (1 to " + n + "): ");
+        int initiatorIndex = scanner.nextInt() - 1;
 
-        System.out.print("Enter the ID of the process initiating the election: ");
-        int initiatorId = scanner.nextInt();
-
-        Process initiator = null;
-        for (Process process : processes) {
-            if (process.id == initiatorId) {
-                initiator = process;
-                break;
-            }
-        }
-
-        if (initiator == null) {
-            System.out.println("Invalid initiator ID.");
-            return;
-        }
-
-        ringElection(processes, initiator);
+        // Ring Election
+        int currentLeader = ringElection(processIds, isActive, initiatorIndex);
+        System.out.println("\nLeader elected: Process with ID " + currentLeader);
     }
 
-    public static void ringElection(ArrayList<Process> processes, Process initiator) {
-        int n = processes.size();
-        ArrayList<Integer> electionList = new ArrayList<>();
+    public static int ringElection(int[] processIds, boolean[] isActive, int initiatorIndex) {
+        int n = processIds.length;
+        int leader = -1;
+        int currentIndex = initiatorIndex;
+        int maxId = processIds[initiatorIndex];
 
-        int startIndex = processes.indexOf(initiator);
-        int currentIndex = startIndex;
+        System.out.println("\nElection initiated by process ID: " + processIds[initiatorIndex]);
 
-        System.out.println("Election initiated by process: " + initiator.id);
-
+        // Passing the election message around the ring
         do {
-            Process currentProcess = processes.get(currentIndex);
-            if (currentProcess.isActive) {
-                electionList.add(currentProcess.id);
-                System.out.println("Process " + currentProcess.id + " passes the message to process "
-                        + processes.get((currentIndex + 1) % n).id);
+            currentIndex = (currentIndex + 1) % n; // Move to the next process in the ring
+            if (isActive[currentIndex]) {
+                System.out.println("Process ID " + processIds[currentIndex] + " receives election message.");
+                if (processIds[currentIndex] > maxId) {
+                    maxId = processIds[currentIndex];
+                }
             }
-            currentIndex = (currentIndex + 1) % n;
-        } while (currentIndex != startIndex);
+        } while (currentIndex != initiatorIndex);
 
-        int newCoordinatorId = Collections.max(electionList);
-        System.out.println("Election list: " + electionList);
-        System.out.println("New coordinator is process: " + newCoordinatorId);
-
-        // Announce the new coordinator
-        currentIndex = startIndex;
-        do {
-            Process currentProcess = processes.get(currentIndex);
-            if (currentProcess.isActive) {
-                System.out.println("Process " + currentProcess.id + " announces the new coordinator as process "
-                        + newCoordinatorId + " to process " + processes.get((currentIndex + 1) % n).id);
-            }
-            currentIndex = (currentIndex + 1) % n;
-        } while (currentIndex != startIndex);
+        leader = maxId;
+        return leader;
     }
 }
