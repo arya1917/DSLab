@@ -1,112 +1,73 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 class Node {
-    int id; // Node ID
-    boolean isCoordinator; // Is this node the coordinator?
-    boolean hasStartedElection; // Prevent repeated election starts
-    List<Node> nodes; // List of all nodes in the system
-
+    int id;
+    boolean isCoordinator;
+    boolean hasStartedElection;
+    List<Node> nodes;
     public Node(int id) {
         this.id = id;
         this.isCoordinator = false;
         this.hasStartedElection = false;
     }
-
     public void setNodes(List<Node> nodes) {
         this.nodes = nodes;
     }
-
-    public void startElection() {
+    public void handleElection() {
         if (hasStartedElection) {
             return; // Prevent duplicate election starts
         }
-
-        System.out.println("Node " + id + " starts an election.");
         hasStartedElection = true;
-
-        boolean higherNodeFound = false;
-
+        System.out.println("Node " + id + " starts an election.");
+        boolean higherNodeFound = false;  // Send ELECTION message to nodes with higher IDs
         for (Node node : nodes) {
             if (node.id > this.id) {
                 System.out.println("Node " + id + " sends ELECTION to Node " + node.id);
                 higherNodeFound = true;
-                node.receiveElectionMessage(this);
+                node.handleElection(); // Trigger election on higher nodes
             }
         }
-
         if (!higherNodeFound) {
-            // No higher node found, become coordinator
+            // If no higher node was found, this node becomes the coordinator
             becomeCoordinator();
         }
     }
-
-    public void receiveElectionMessage(Node sender) {
-        System.out.println("Node " + id + " received ELECTION from Node " + sender.id);
-        if (!hasStartedElection) {
-            startElection(); // Start election if not already started
-        }
-    }
-
     public void becomeCoordinator() {
         isCoordinator = true;
         System.out.println("Node " + id + " becomes the COORDINATOR.");
-        notifyAllNodes();
-    }
-
-    public void notifyAllNodes() {
         for (Node node : nodes) {
             if (node.id != this.id) {
-                node.receiveCoordinatorMessage(this);
+                node.isCoordinator = false; // Ensure only one coordinator exists
+                System.out.println("Node " + node.id + " acknowledges Node " + id + " as COORDINATOR.");
             }
         }
-
-        // Reset election flags for all nodes
         for (Node node : nodes) {
             node.hasStartedElection = false;
         }
     }
-
-    public void receiveCoordinatorMessage(Node coordinator) {
-        System.out.println("Node " + id + " acknowledges Node " + coordinator.id + " as COORDINATOR.");
-        isCoordinator = false; // Ensure only one coordinator exists
-    }
 }
-
 public class Bully1 {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-
-        // Input: Number of nodes
+        Scanner scanner = new Scanner(System.in);    // Read the number of nodes
         System.out.print("Enter the number of nodes: ");
         int n = scanner.nextInt();
-
-        // Input: Node IDs
-        List<Node> nodes = new ArrayList<>();
+        List<Node> nodes = new ArrayList<>();      // Read the IDs of the nodes
         System.out.println("Enter the IDs of the nodes: ");
         for (int i = 0; i < n; i++) {
             int id = scanner.nextInt();
             nodes.add(new Node(id));
-        }
-
-        // Set nodes for each node
+        }      // Set the nodes for each node
         for (Node node : nodes) {
             node.setNodes(nodes);
-        }
-
-        // Input: Node to start the election
+        }      // Start the election from a specified node
         System.out.print("Enter the ID of the node to start the election: ");
         int initiatorId = scanner.nextInt();
-
-        // Find the initiating node and start the election
         for (Node node : nodes) {
             if (node.id == initiatorId) {
-                node.startElection();
+                node.handleElection(); // Handle the election process
                 break;
             }
         }
-
         scanner.close();
     }
 }
