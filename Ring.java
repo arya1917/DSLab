@@ -1,42 +1,65 @@
-class Process {
-    int processId;
-    boolean isLeader;
-
-    Process(int id) {
-        this.processId = id;
-        this.isLeader = false;
-    }
-}
+import java.util.*;
 
 public class Ring {
-
     public static void main(String[] args) {
-        // Step 1: Create processes
-        Process[] processes = {new Process(1), new Process(3), new Process(5), new Process(2), new Process(4)};
+        Scanner in = new Scanner(System.in);
+        System.out.print("Enter number of processes: ");
+        int n = in.nextInt();
+        int[] proc = new int[n];
 
-        // Step 2: Start the election
-        int leaderId = processes[0].processId; // Initial leader is the first process
+        System.out.println("Enter process IDs:");
+        for (int i = 0; i < n; i++) proc[i] = in.nextInt();
 
-        System.out.println("Starting Ring Election...");
+        Arrays.sort(proc);
+        System.out.println("Processes: " + Arrays.toString(proc));
+        System.out.println("Coordinator: " + proc[n - 1]);
 
-        for (int i = 1; i < processes.length; i++) {
-            System.out.println("Process " + processes[i - 1].processId + " sends " + leaderId + " to Process " + processes[i].processId);
+        while (true) {
+            System.out.println("\n1. Start Election\n2. Quit");
+            int choice = in.nextInt();
+            if (choice == 2) break;
 
-            // Compare current leader with the next process's ID
-            if (processes[i].processId > leaderId) {
-                leaderId = processes[i].processId; // Update leader ID if higher
-            }
-        }
+            if (choice == 1) {
+                System.out.print("Enter initiating process number: ");
+                int start = in.nextInt() - 1;
+                int max = proc[start];
+                System.out.println("Election Messages:");
 
-        // Step 3: Announce leader to all processes
-        System.out.println("Final leader is Process " + leaderId);
-        for (Process process : processes) {
-            if (process.processId == leaderId) {
-                process.isLeader = true;
-                System.out.println("Process " + process.processId + " is elected as the leader.");
+                for (int i = 0; i < n; i++) {
+                    int curr = proc[(start + i) % n];
+                    System.out.println("Process " + proc[start] + " sends message to " + curr);
+                    max = Math.max(max, curr);
+                }
+                System.out.println("Coordinator: " + max);
             } else {
-                System.out.println("Process " + process.processId + " acknowledges the leader is Process " + leaderId + ".");
+                System.out.println("Invalid choice.");
             }
         }
+        System.out.println("Program terminated.");
     }
 }
+
+/*
+   java Ring
+
+   Enter number of processes: 5
+   Enter process IDs:
+   1 2 3 4 5
+   Processes: [1, 2, 3, 4, 5]
+   Coordinator: 5
+
+   1. Start Election
+   2. Quit
+   1
+   Enter initiating process number: 3
+   Election Messages:
+   Process 3 sends message to 3
+   Process 3 sends message to 4
+   Process 3 sends message to 5
+   Process 3 sends message to 1
+   Process 3 sends message to 2
+   Coordinator: 5
+
+   1. Start Election
+   2. Quit
+*/
