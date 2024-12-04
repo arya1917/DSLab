@@ -1,62 +1,48 @@
-import java.util.Scanner;
+import java.util.*;
 
-public class BerkeleyAlgorithm {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+class BerkeleyAlgorithm {
 
-        // Input the number of processes
-        System.out.print("Enter the number of processes (including the server): ");
-        int n = scanner.nextInt();
-
-        int[] clocks = new int[n];
-
-        // Input the clock times of all processes
-        System.out.println("Enter the clock times of the processes (in seconds):");
-        for (int i = 0; i < n; i++) {
-            System.out.print("Process " + (i + 1) + " clock time: ");
-            clocks[i] = scanner.nextInt();
+    static class Node {
+        int id;
+        long clockTime;
+        Node(int id, long clockTime) {
+            this.id = id;
+            this.clockTime = clockTime;
         }
-
-        // Choose a server process
-        System.out.print("Enter the server process index (1 to " + n + "): ");
-        int serverIndex = scanner.nextInt() - 1;
-
-        // Perform Berkeley Algorithm
-        berkeleyAlgorithm(clocks, serverIndex);
-
-        // Display synchronized clock times
-        System.out.println("\nSynchronized clock times:");
-        for (int i = 0; i < n; i++) {
-            System.out.println("Process " + (i + 1) + " clock: " + clocks[i] + " seconds");
+        public String toString() {
+            return "Node " + id + " -> Clock: " + clockTime;
         }
     }
 
-    public static void berkeleyAlgorithm(int[] clocks, int serverIndex) {
-        int n = clocks.length;
-        int serverTime = clocks[serverIndex];
-        int totalDrift = 0;
-        int activeProcesses = 0;
-
-        System.out.println("\nServer clock time: " + serverTime + " seconds");
-
-        // Calculate clock differences and collect drifts
-        System.out.println("Calculating drifts:");
-        for (int i = 0; i < n; i++) {
-            if (i != serverIndex) { // All processes except the server
-                int drift = clocks[i] - serverTime;
-                totalDrift += drift;
-                activeProcesses++;
-                System.out.println("Process " + (i + 1) + " drift: " + drift + " seconds");
-            }
-        }
-
-        // Compute average drift
-        int averageDrift = totalDrift / (activeProcesses + 1);
-        System.out.println("\nAverage drift: " + averageDrift + " seconds");
-
-        // Adjust all clocks
-        for (int i = 0; i < n; i++) {
-            clocks[i] -= averageDrift;
-        }
+    public static void main(String[] args) {
+        List<Node> nodes = Arrays.asList(new Node(1, 1000), new Node(2, 1200), new Node(3, 1300), new Node(4, 1100));
+        
+        long avgTime = nodes.stream().mapToLong(n -> n.clockTime).sum() / nodes.size();
+        System.out.println("Average Time: " + avgTime);
+        
+        nodes.forEach(n -> {
+            long offset = avgTime - n.clockTime;
+            System.out.println("Node " + n.id + " - Offset: " + offset);
+            n.clockTime += offset;
+        });
+        
+        nodes.forEach(System.out::println);
     }
 }
+
+/*
+   javac BerkeleyAlgorithm.java
+   java BerkeleyAlgorithm
+
+output
+
+   Average Time: 1150
+   Node 1 - Offset: 150
+   Node 2 - Offset: -50
+   Node 3 - Offset: -150
+   Node 4 - Offset: 50
+   Node 1 -> Clock: 1150
+   Node 2 -> Clock: 1150
+   Node 3 -> Clock: 1150
+   Node 4 -> Clock: 1150
+*/
